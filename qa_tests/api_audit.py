@@ -6,6 +6,7 @@ import time
 BASE_URL = "http://localhost:8000"
 test_email = f"qa.test.{int(time.time())}@example.com"
 test_password = "Password123!"
+test_slug = f"qa-workspace-{int(time.time())}"
 
 results = {
     "Working Features": [],
@@ -40,12 +41,12 @@ def request(method, path, data=None, token=None):
 
 # 1. Authentication
 print("Testing Authentication...")
-status, res = request("POST", "/api/v1/saas/saas/register", {
+status, res = request("POST", "/api/v1/saas/register", {
     "admin_email": test_email,
     "admin_password": test_password,
     "admin_full_name": "QA Tester",
     "company_name": "QA Company",
-    "workspace_slug": f"qa-workspace-{int(time.time())}"
+    "workspace_slug": test_slug
 })
 if status in [200, 201]:
     results["Working Features"].append("Authentication: SaaS Register")
@@ -55,7 +56,8 @@ else:
 
 status, res = request("POST", "/api/v1/auth/login", {
     "email": test_email,
-    "password": test_password
+    "password": test_password,
+    "company_slug": test_slug
 })
 token = None
 if status == 200 and isinstance(res, dict) and "access_token" in res:

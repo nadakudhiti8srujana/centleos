@@ -1,20 +1,25 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication and Registration Flows', () => {
+  // Shared email to pass the newly registered user's email from Flow 3 to Flow 4
+  let registeredEmail = 'audituser@saasum.com';
 
   test('Flow 1: Super Admin Login', async ({ page }) => {
+    // Force desktop viewport
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('http://localhost:5173/login');
+    const leftPage = page.locator('.origin-right');
     
-    // Click Super Admin tab
-    await page.click('button:has-text("Super Admin Login")');
+    // Click Super Admin tab (forcing click to bypass framer-motion stability checks)
+    await leftPage.locator('button:has-text("Super Admin")').click({ force: true });
     await page.waitForTimeout(500);
     
     // Fill in credentials
-    await page.fill('input[type="email"]', 'superadmin@centleos.com');
-    await page.fill('input[type="password"]', 'SuperAdmin@123');
+    await leftPage.locator('input[type="email"]').fill('superadmin@centleos.com');
+    await leftPage.locator('input[type="password"]').fill('SuperAdmin@123');
     
     // Click Submit
-    await page.click('button[type="submit"]');
+    await leftPage.locator('button[type="submit"]').click({ force: true });
     
     // Wait for redirect to /super-admin
     await page.waitForURL('**/super-admin');
@@ -24,25 +29,31 @@ test.describe('Authentication and Registration Flows', () => {
     await page.screenshot({ path: 'screenshots/1_super_admin_dashboard.png', fullPage: true });
     
     // Verify role header or elements
-    await expect(page.locator('text=Global Super Admin')).toBeVisible();
+    await expect(page.locator('text=Super Admin').first()).toBeVisible();
   });
 
   test('Flow 2: Company Admin Login', async ({ page }) => {
+    // Force desktop viewport
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('http://localhost:5173/login');
+    const leftPage = page.locator('.origin-right');
     
     // Click Company / User Login tab
-    await page.click('button:has-text("Company / User Login")');
+    await leftPage.locator('button:has-text("Company Login")').click({ force: true });
     await page.waitForTimeout(500);
     
     // Select Company dropdown
-    await page.selectOption('select', 'saasum');
+    await leftPage.locator('button:has-text("Select Workspace")').click({ force: true });
+    await page.waitForTimeout(300);
+    await leftPage.locator('button:has-text("Saasum")').click({ force: true });
+    await page.waitForTimeout(300);
     
     // Fill in credentials
-    await page.fill('input[type="email"]', 'admin@saasum.com');
-    await page.fill('input[type="password"]', 'CompanyAdmin@123');
+    await leftPage.locator('input[type="email"]').fill('admin@saasum.com');
+    await leftPage.locator('input[type="password"]').fill('CompanyAdmin@123');
     
     // Click Submit
-    await page.click('button[type="submit"]');
+    await leftPage.locator('button[type="submit"]').click({ force: true });
     
     // Wait for redirect to /dashboard
     await page.waitForURL('**/dashboard');
@@ -53,48 +64,66 @@ test.describe('Authentication and Registration Flows', () => {
   });
 
   test('Flow 3: New User Registration', async ({ page }) => {
+    // Force desktop viewport
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('http://localhost:5173/register');
+    const rightPage = page.locator('.origin-left');
     await page.waitForTimeout(1000);
     
+    // Click Register User tab
+    await rightPage.locator('button:has-text("Register User")').click({ force: true });
+    await page.waitForTimeout(500);
+    
     // Select Company dropdown
-    await page.selectOption('select', 'saasum');
+    await rightPage.locator('button:has-text("Select Workspace")').click({ force: true });
+    await page.waitForTimeout(300);
+    await rightPage.locator('button:has-text("Saasum")').click({ force: true });
+    await page.waitForTimeout(300);
+    
+    // Use dynamic email to avoid "Email already registered" conflict
+    registeredEmail = `audituser.${Date.now()}@saasum.com`;
     
     // Fill in registration details using nth inputs
-    await page.locator('input').nth(0).fill('Audit User');
-    await page.locator('input[type="email"]').fill('audituser@saasum.com');
-    await page.locator('input[type="password"]').fill('AuditUser@123');
+    await rightPage.locator('input').nth(0).fill('Audit User');
+    await rightPage.locator('input[type="email"]').fill(registeredEmail);
+    await rightPage.locator('input[type="password"]').fill('AuditUser@123');
     
     // Save screenshot of registration page filled
     await page.screenshot({ path: 'screenshots/3_register_page_filled.png' });
     
     // Submit form
-    await page.click('button[type="submit"]');
+    await rightPage.locator('button[type="submit"]').click({ force: true });
     
-    // Wait for redirect to /user-dashboard
-    await page.waitForURL('**/user-dashboard');
-    await page.waitForTimeout(2000); // Allow dashboard to load
+    // Verify success message is shown
+    await expect(page.locator('text=Account created successfully!')).toBeVisible();
     
     // Save screenshot
-    await page.screenshot({ path: 'screenshots/3_user_dashboard_after_registration.png', fullPage: true });
+    await page.screenshot({ path: 'screenshots/3_registration_success.png', fullPage: true });
   });
 
   test('Flow 4: New User Login', async ({ page }) => {
+    // Force desktop viewport
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('http://localhost:5173/login');
+    const rightPage = page.locator('.origin-left');
     await page.waitForTimeout(1000);
     
     // Click Company / User Login tab
-    await page.click('button:has-text("Company / User Login")');
+    await rightPage.locator('button:has-text("User Login")').click({ force: true });
     await page.waitForTimeout(500);
     
     // Select Company dropdown
-    await page.selectOption('select', 'saasum');
+    await rightPage.locator('button:has-text("Select Workspace")').click({ force: true });
+    await page.waitForTimeout(300);
+    await rightPage.locator('button:has-text("Saasum")').click({ force: true });
+    await page.waitForTimeout(300);
     
-    // Fill in credentials
-    await page.fill('input[type="email"]', 'audituser@saasum.com');
-    await page.fill('input[type="password"]', 'AuditUser@123');
+    // Fill in credentials using shared dynamic email
+    await rightPage.locator('input[type="email"]').fill(registeredEmail);
+    await rightPage.locator('input[type="password"]').fill('AuditUser@123');
     
     // Click Submit
-    await page.click('button[type="submit"]');
+    await rightPage.locator('button[type="submit"]').click({ force: true });
     
     // Wait for redirect to /user-dashboard
     await page.waitForURL('**/user-dashboard');

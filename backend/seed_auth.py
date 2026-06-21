@@ -1,7 +1,7 @@
 import sys
 import os
 
-sys.path.append(os.path.abspath('c:/Users/DELL/OneDrive/Desktop/centleos/backend'))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.database import SessionLocal
 from app.models.user import User
