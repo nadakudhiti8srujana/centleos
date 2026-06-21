@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: theme('colors.aurora.bg');
+    color: theme('colors.aurora.text');
+    @apply antialiased selection:bg-indigo-500/30 selection:text-indigo-200;
+  }
+
+  /* Global Custom Scrollbar for Aurora OS */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+  }
+
+  /* Subtly blurred glass panels with high performance */
+  .glass-panel {
+    @apply bg-[#0B1120]/90 backdrop-blur-md border border-white/5 shadow-card hover:border-white/10 transition-colors duration-300;
+  }
+
+  /* Deeply separated floating panels */
+  .floating-panel {
+    @apply bg-[#0B1120] border border-white/5 shadow-elevated rounded-2xl;
+  }
+}
+
+/* Fix autofill styles for dark theme inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px #0B1120 inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
