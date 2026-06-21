@@ -12,23 +12,28 @@ from app.models import Base, Company
 settings = get_settings()
 
 
+db_error = None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-
-    db = SessionLocal()
-
+    global db_error
     try:
-        if db.query(Company).count() == 0:
-            from app.core.seeder import seed_database
-            seed_database(db)
-
+        Base.metadata.create_all(bind=engine)
+        db = SessionLocal()
+        try:
+            if db.query(Company).count() == 0:
+                from app.core.seeder import seed_database
+                seed_database(db)
+        except Exception as e:
+            print(f"Error seeding database: {e}")
+            db.rollback()
+            db_error = f"Seeding error: {str(e)}"
+        finally:
+            db.close()
     except Exception as e:
-        print(f"Error seeding database: {e}")
-        db.rollback()
-
-    finally:
-        db.close()
+        print(f"Database connection/migration error: {e}")
+        db_error = f"Database error: {str(e)}"
 
     yield
 
@@ -65,7 +70,8 @@ app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 @app.get("/health")
 def health_check():
     return {
-        "status": "healthy",
+        "status": "healthy" if not db_error else "unhealthy",
+        "database": "connected" if not db_error else db_error,
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
     }
